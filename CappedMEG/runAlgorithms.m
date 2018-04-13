@@ -4,9 +4,9 @@ function [ ] = runAlgorithms(A, k, n, tit, C1, C2, isOnline)
     Anew = A./repmat(sqrt(sum(A'.^2)),sizeA(2),1)';     %data normalization
     
     if isOnline
-        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
+        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);          %test set in online experiment
     else
-        AnewTE = Anew(1:floor(floor(sizeA(1)/3)*2/10), :);      %test set
+        AnewTE = Anew(1:floor(floor(sizeA(1)/3)*2/10), :);      %test set in batch experimnet
     end
     sizeTE = size(AnewTE);
     
@@ -21,29 +21,36 @@ function [ ] = runAlgorithms(A, k, n, tit, C1, C2, isOnline)
     capIncremental = 0;
     capMSG = 0;
     capMEG = 0;
+    
+     if tit == "Artifficial"
+        lossIncremental = zeros(sizeA(1),n);
+        lossOja = zeros(sizeA(1),n);
+        lossMSG = zeros(sizeA(1),n);
+        lossMEG = zeros(sizeA(1),n);
+        a = C2(1:2);
+        c = C2(3:4);
+        e = C2(5:6);
+        b = 1;
+        d = 1;
+        f = 1;
+     end
 
     for ii = 1:n
-        
+        ii
         if tit == "Artifficial"
-            AnewTE = mnrnd(1,((1.1).^((-1)*1:32))./sum((1.1).^((-1)*1:32)),1100);
-            a = C2(1:2);
-            c = C2(3:4);
-            e = C2(5:6);
-            b = 1;
-            d = 1;
-            f = 1;
+            AnewTE = mnrnd(1,((1.1).^((-1)*1:32))./sum((1.1).^((-1)*1:32)),sizeA(1));
         else
             
             Anew = Anew(randperm(sizeA(1)), :);     %mixing tuples
 
             if isOnline
                 size(Anew);
-                AnewTR = Anew(1:floor(sizeA(1)/10), :);     %czêœæ treningowa
-                AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %czêœæ testowa
+                AnewTR = Anew(1:floor(sizeA(1)/10), :);     %training set
+                AnewTE = Anew(floor(sizeA(1)/10)+1:end, :); %test set
                 size(AnewTR);
             else 
-                AnewTR = Anew(1:floor(sizeA(1)/3)*2, :);     %training set
-                AnewTE = Anew;     %test set
+                AnewTR = Anew(1:floor(sizeA(1)/3)*2, :);    %training set
+                AnewTE = Anew;                              %test set
             end
 
             %training learning rate
@@ -64,7 +71,9 @@ function [ ] = runAlgorithms(A, k, n, tit, C1, C2, isOnline)
             [e, f] = minLRate(lossMSGLR, lossMSGLRSqrt);
         
         end
-
+        
+        %MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, isTraining, isOnline)
+        %isMEG == 0 - MSG, %isMEG == 1 - MEG, %isMEG == 2 - IPCA, 
         [lossIncremental(:,ii) , timeIncremental(ii),  capIncremental(ii) ] = MEG(AnewTE, k, [0, 0], 2, 2, 0, 0, isOnline);
         [lossOja(:,ii) , timeOja(ii)] = oja(AnewTE, k, [C1(a(1)), C2(a(2))], b, 0, isOnline);
         [lossMEG(:,ii) , timeMEG(ii),  capMEGsqrt(ii) ] = MEG(AnewTE, k, [C1(c(1)), C2(c(2))], 1, d, 1, 0, isOnline);

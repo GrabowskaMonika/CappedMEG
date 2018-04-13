@@ -2,22 +2,22 @@ function [ loss, time ] = oja( Anew, k, lRate, isSqrt, isTraining, isOnline )
 
     ik = 0;
     sizeA = size(Anew);
-    EigVectors = randn(sizeA(2),k); %z normalnego 
+    EigVectors = randn(sizeA(2),k); %normal distribution 
     loss = 0;
     time = 0;
 
     if ~isOnline
         if isTraining
-            AnewTE = Anew(1:floor(sizeA(1)/10), :);         %training set
+            AnewTE = Anew(1:floor(sizeA(1)/10), :);       %training set
             Anew = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
         else
-            AnewTE = Anew(floor(sizeA(1)/3)*2+1:end, :);    %test set
+            AnewTE = Anew(floor(sizeA(1)/3)*2+1:end, :);  %test set
             Anew = Anew(1:floor(sizeA(1)/3)*2, :);        %training set
         end    
         sumLength = sum(sum(AnewTE.^2));
     else
-        AnewTR = Anew(1:floor(sizeA(1)/10), :);     %czêœæ treningowa
-        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %czêœæ testowa
+        AnewTR = Anew(1:floor(sizeA(1)/10), :);         %traning set
+        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
     end
     sizeA = size(Anew);
 
@@ -28,8 +28,10 @@ function [ loss, time ] = oja( Anew, k, lRate, isSqrt, isTraining, isOnline )
         elseif isSqrt == 0
             lRatei = lRate(1)/(lRate(2) + i);
         end
+        
         [Q, R] = qr(EigVectors, 0);
         EigVectors = Q;
+        
         time = time + toc;
         
         if isOnline

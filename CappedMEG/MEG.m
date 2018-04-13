@@ -6,7 +6,7 @@ function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, 
     l = 0;
     C = [];
     U = zeros(sizeA(2),0);
-    S = [];
+    S = [];  
     Un = [];
     Sn = [];
     Epsilon = 10^(-10);
@@ -15,16 +15,16 @@ function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, 
 
     if ~isOnline
         if isTraining
-            AnewTE = Anew(1:floor(sizeA(1)/10), :);         %training set
+            AnewTE = Anew(1:floor(sizeA(1)/10), :);       %training set
             Anew = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
         else
-            AnewTE = Anew(floor(sizeA(1)/3)*2+1:end, :);    %test set
+            AnewTE = Anew(floor(sizeA(1)/3)*2+1:end, :);  %test set
             Anew = Anew(1:floor(sizeA(1)/3)*2, :);        %training set
         end    
         sumLength = sum(sum(AnewTE.^2));
     else
-        AnewTR = Anew(1:floor(sizeA(1)/10), :);     %czêœæ treningowa
-        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %czêœæ testowa
+        AnewTR = Anew(1:floor(sizeA(1)/10), :);         %training set
+        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
     end
     sizeA = size(Anew);
 
@@ -45,7 +45,7 @@ function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, 
         time = time + toc;
         
         if isOnline
-            if i == 1
+            if i == 1        
                 loss(1) = (sum(Anew(i,:).^2) - xpNorm^2*(k-l)/(sizeA(2) - l) - sum(xt.^2));
             elseif l<k
                 loss(i) = loss(i-1) + (sum(Anew(i,:).^2) - xpNorm^2*(k-l)/(sizeA(2) - l) - sum(xt.^2));
