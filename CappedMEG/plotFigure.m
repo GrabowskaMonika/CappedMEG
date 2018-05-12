@@ -1,10 +1,9 @@
-function [ ] = plotFigure(Regret, batchLossPerIteration, color, lineWidth)
+function [ ] = plotFigure(Loss, batchLossPerIteration, color, lineWidth)
 
-    Graph = mean(Regret(2:end, :)');
-    [ m, nn ] = size(Graph);
-    Graph = Graph - batchLossPerIteration; 
+    LossAVG = mean(Loss(2:end, :)');
+    [m, nn] = size(LossAVG);
+    Regret = LossAVG - batchLossPerIteration; 
     v1= 1:1:nn;
     v1 = v1 * 10;
-    plot(v1(5:end), Graph(5:end), color,  'LineWidth', lineWidth)
-    
+    plot(v1(2:end), Regret(2:end), color,  'LineWidth', lineWidth)
 end

@@ -13,11 +13,14 @@ function [ loss, time ] = oja( Anew, k, lRate, isSqrt, isTraining, isOnline )
         else
             AnewTE = Anew(floor(sizeA(1)/3)*2+1:end, :);  %test set
             Anew = Anew(1:floor(sizeA(1)/3)*2, :);        %training set
+            sizeA = size(Anew);
+            loss = zeros(1,floor(sizeA(1)/3*2/10));
         end    
         sumLength = sum(sum(AnewTE.^2));
     else
         AnewTR = Anew(1:floor(sizeA(1)/10), :);         %traning set
         AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
+        loss = zeros(1, sizeA(1));
     end
     sizeA = size(Anew);
 
@@ -41,11 +44,17 @@ function [ loss, time ] = oja( Anew, k, lRate, isSqrt, isTraining, isOnline )
                 loss(i) = loss(i-1) + (sum(Anew(i,:).^2) -  sum((Anew(i,:)*EigVectors).^2));        
             end
         else        
-            if ~isTraining
-                if mod(i,10) == 0
-                    ik = ik + 1;
-                    loss(ik) = compressionLoss(AnewTE, EigVectors, k, sumLength);
-                end
+             if ~isTraining
+             if mod(i,10) == 0
+              sizeE = size(EigVectors);
+              if sizeE(2) < k 
+              ik = ik + 1;
+               loss(ik) = 0;
+             else
+             ik = ik + 1;
+             loss(ik) = compressionLoss(AnewTE, EigVectors, k, sumLength);
+             end
+             end
             end
         end
         
