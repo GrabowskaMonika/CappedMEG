@@ -1,5 +1,5 @@
 function [ eigenValues ] = projectionMEG(k, values)
-    
+
     l = length(values);
     evalues = exp((-1) * values(1:l));
     

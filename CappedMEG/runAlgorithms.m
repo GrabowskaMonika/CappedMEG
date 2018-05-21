@@ -1,22 +1,21 @@
-function [ ] = runAlgorithms(A, k, n, tit, C1, C2, isOnline)
+function [ ] = runAlgorithms(A, k, n, tit, C1, C2, isOnline, valSetSize, teSetSize)
 
     sizeA = size(A);
-    Anew = A./repmat(sqrt(sum(A'.^2)),sizeA(2),1)';     %data normalization
-    
+    Anew = A./repmat(sqrt(sum(A'.^2)),sizeA(2),1)';     		%data normalization
     if isOnline
-        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);          %test set in online experiment
+        AnewTR = Anew(floor(sizeA(1)*valSetSize)+1:end, :);      	%test set in online experiment
     else
-        AnewTE = Anew(1:floor(floor(sizeA(1)/3)*2/10), :);      %test set in batch experimnet
+        AnewTR = Anew(1:floor(floor(sizeA(1)*(1-teSetSize))/10), :);  	%test set in batch experimnet
     end
-    sizeTE = size(AnewTE);
+    sizeTR = size(AnewTR);
     
     D =  svd(Anew).^2 / sizeA(1);
     batchLossPerIteration = sum(D(k+1:length(D)));
 
-    lossIncremental = zeros(sizeTE(1),n);
-    lossOja = zeros(sizeTE(1),n);
-    lossMSG = zeros(sizeTE(1),n);
-    lossMEG = zeros(sizeTE(1),n);
+    lossIncremental = zeros(sizeTR(1),n);
+    lossOja = zeros(sizeTR(1),n);
+    lossMSG = zeros(sizeTR(1),n);
+    lossMEG = zeros(sizeTR(1),n);
     
     capIncremental = 0;
     capMSG = 0;
@@ -38,31 +37,29 @@ function [ ] = runAlgorithms(A, k, n, tit, C1, C2, isOnline)
     for ii = 1:n
         ii
         if tit == "Artifficial"
-            AnewTE = mnrnd(1,((1.1).^((-1)*1:32))./sum((1.1).^((-1)*1:32)),sizeA(1));
+            AnewTR = mnrnd(1,((1.1).^((-1)*1:32))./sum((1.1).^((-1)*1:32)),sizeA(1));
         else
             
-            Anew = Anew(randperm(sizeA(1)), :);     %mixing tuples
+            Anew = Anew(randperm(sizeA(1)), :);     			%mixing tuples
 
             if isOnline
-                size(Anew);
-                AnewTR = Anew(1:floor(sizeA(1)/10), :);     %training set
-                AnewTE = Anew(floor(sizeA(1)/10)+1:end, :); %test set
-                size(AnewTR);
+                AnewVAL = Anew(1:floor(sizeA(1)*valSetSize), :);     	%validation set in online experiment
+                AnewTR = Anew(floor(sizeA(1)*valSetSize)+1:end, :);  	%training set in online experiment
             else 
-                AnewTR = Anew(1:floor(sizeA(1)/3)*2, :);    %training set
-                AnewTE = Anew;                              %test set
+                AnewVAL = Anew(1:floor(sizeA(1)*(1-teSetSize)), :);   	%training set in batch experiment
+                AnewTR = Anew;                                        	%set in batch experiment
             end
 
-            %training learning rate
+            %tune learning rate
             for i1 = 1:length(C1)
                 for i2 = 1:length(C2)
                     lRate = [C1(i1), C2(i2)];        
-                    [lossOjaLR(i1,i2), timeOjalR] = oja(AnewTR, k, lRate, 0, 1, isOnline);
-                    [lossOjaLRSqrt(i1,i2), timeOjaLR] = oja(AnewTR, k, lRate, 1, 1, isOnline);
-                    [lossMEGLR(i1,i2), timeMEGLR, capMEGLR] = MEG(AnewTR, k, lRate, 1, 0, 1, 1, isOnline);
-                    [lossMEGLRSqrt(i1,i2), timeMEGLR, capMEGLR] = MEG(AnewTR, k, lRate, 1, 1, 1, 1, isOnline);
-                    [lossMSGLR(i1,i2), timeMSGLR, capMSGLR] = MEG(AnewTR, k, lRate, 0, 0, 1, 1, isOnline);
-                    [lossMSGLRSqrt(i1,i2), timeMSGLR, capMSGLR] = MEG(AnewTR, k, lRate, 0, 1, 1, 1, isOnline);
+                    [lossOjaLR(i1,i2), timeOjalR] = oja(AnewVAL, k, lRate, 0, 1, isOnline, valSetSize, teSetSize);
+                    [lossOjaLRSqrt(i1,i2), timeOjaLR] = oja(AnewVAL, k, lRate, 1, 1, isOnline, valSetSize, teSetSize);
+                    [lossMEGLR(i1,i2), timeMEGLR, capMEGLR] = MEG(AnewVAL, k, lRate, 1, 0, 1, 1, isOnline, valSetSize, teSetSize);
+                    [lossMEGLRSqrt(i1,i2), timeMEGLR, capMEGLR] = MEG(AnewVAL, k, lRate, 1, 1, 1, 1, isOnline, valSetSize, teSetSize);
+                    [lossMSGLR(i1,i2), timeMSGLR, capMSGLR] = MEG(AnewVAL, k, lRate, 0, 0, 1, 1, isOnline, valSetSize, teSetSize);
+                    [lossMSGLRSqrt(i1,i2), timeMSGLR, capMSGLR] = MEG(AnewVAL, k, lRate, 0, 1, 1, 1, isOnline, valSetSize, teSetSize);
                 end
             end
 
@@ -72,12 +69,12 @@ function [ ] = runAlgorithms(A, k, n, tit, C1, C2, isOnline)
         
         end
         
-        %MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, isTraining, isOnline)
+        %MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, isTraining, isOnline, valSetSize, teSetSize)
         %isMEG == 0 - MSG, %isMEG == 1 - MEG, %isMEG == 2 - IPCA, 
-        [lossIncremental(:,ii) , timeIncremental(ii),  capIncremental(ii) ] = MEG(AnewTE, k, [0, 0], 2, 2, 0, 0, isOnline);
-        [lossOja(:,ii) , timeOja(ii)] = oja(AnewTE, k, [C1(a(1)), C2(a(2))], b, 0, isOnline);
-        [lossMEG(:,ii) , timeMEG(ii),  capMEGsqrt(ii) ] = MEG(AnewTE, k, [C1(c(1)), C2(c(2))], 1, d, 1, 0, isOnline);
-        [lossMSG(:,ii) , timeMSG(ii),  capMSGsqrt(ii) ] = MEG(AnewTE, k, [C1(e(1)), C2(e(2))], 0, f, 1, 0, isOnline);
+        [lossIncremental(:,ii) , timeIncremental(ii),  capIncremental(ii) ] = MEG(AnewTR, k, [0, 0], 2, 2, 0, 0, isOnline, valSetSize, teSetSize);
+        [lossOja(:,ii) , timeOja(ii)] = oja(AnewTR, k, [C1(a(1)), C2(a(2))], b, 0, isOnline, valSetSize, teSetSize);
+        [lossMEG(:,ii) , timeMEG(ii),  capMEGsqrt(ii) ] = MEG(AnewTR, k, [C1(c(1)), C2(c(2))], 1, d, 1, 0, isOnline, valSetSize, teSetSize);
+        [lossMSG(:,ii) , timeMSG(ii),  capMSGsqrt(ii) ] = MEG(AnewTR, k, [C1(e(1)), C2(e(2))], 0, f, 1, 0, isOnline, valSetSize, teSetSize);
 
     end
 

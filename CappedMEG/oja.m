@@ -1,23 +1,23 @@
-function [ loss, time ] = oja( Anew, k, lRate, isSqrt, isTraining, isOnline )
+function [ loss, time ] = oja(Anew, k, lRate, isSqrt, isTraining, isOnline, valSetSize, teSetSize)
 
     ik = 0;
     sizeA = size(Anew);
     EigVectors = randn(sizeA(2),k); %normal distribution 
-    loss = 0;
     time = 0;
 
     if ~isOnline
         if isTraining
-            AnewTE = Anew(1:floor(sizeA(1)/10), :);       %training set
-            Anew = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
+            AnewTE = Anew(1:floor(sizeA(1)*valSetSize), :);    %validaton set in batch test
+            Anew = Anew(floor(sizeA(1)*valSetSize)+1:end, :);   %appropriate training set
         else
-            AnewTE = Anew(floor(sizeA(1)/3)*2+1:end, :);  %test set
-            Anew = Anew(1:floor(sizeA(1)/3)*2, :);        %training set
+            AnewTE = Anew(floor(sizeA(1)*(1-teSetSize))+1:end, :);  %test set in batch test
+            Anew = Anew(1:floor(sizeA(1)*(1-teSetSize)), :);        %training set in batch set
+            sizeA = size(Anew);
+            loss = zeros(1,floor(sizeA(1)*(1-teSetSize)/10));
         end    
         sumLength = sum(sum(AnewTE.^2));
     else
-        AnewTR = Anew(1:floor(sizeA(1)/10), :);         %traning set
-        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
+        loss = zeros(1, sizeA(1));
     end
     sizeA = size(Anew);
 
@@ -43,8 +43,14 @@ function [ loss, time ] = oja( Anew, k, lRate, isSqrt, isTraining, isOnline )
         else        
             if ~isTraining
                 if mod(i,10) == 0
-                    ik = ik + 1;
-                    loss(ik) = compressionLoss(AnewTE, EigVectors, k, sumLength);
+                    sizeE = size(EigVectors);
+                    if sizeE(2) < k 
+                    	ik = ik + 1;
+                        loss(ik) = 0;
+                    else
+                        ik = ik + 1;
+                        loss(ik) = compressionLoss(AnewTE, EigVectors, k, sumLength);
+                    end
                 end
             end
         end

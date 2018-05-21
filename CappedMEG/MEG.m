@@ -1,8 +1,7 @@
-function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, isTraining, isOnline)
+function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, isTraining, isOnline, valSetSize, teSetSize)
 
     time = 0;
     sizeA = size(Anew);
-    loss=0;
     l = 0;
     C = [];
     U = zeros(sizeA(2),0);
@@ -15,22 +14,22 @@ function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, 
 
     if ~isOnline
         if isTraining
-            AnewTE = Anew(1:floor(sizeA(1)/10), :);       %training set
-            Anew = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
+            AnewTE = Anew(1:floor(sizeA(1)*valSetSize), :);    %validaton set in batch test
+            Anew = Anew(floor(sizeA(1)*valSetSize)+1:end, :);   %appropriate training set
         else
-            AnewTE = Anew(floor(sizeA(1)/3)*2+1:end, :);  %test set
-            Anew = Anew(1:floor(sizeA(1)/3)*2, :);        %training set
+            AnewTE = Anew(floor(sizeA(1)*(1-teSetSize))+1:end, :);  %test set in batch test
+            Anew = Anew(1:floor(sizeA(1)*(1-teSetSize)), :);        %training set in batch set
+            sizeA = size(Anew);
+            loss = zeros(1,floor(sizeA(1)*(1-teSetSize)/10));
         end    
         sumLength = sum(sum(AnewTE.^2));
     else
-        AnewTR = Anew(1:floor(sizeA(1)/10), :);         %training set
-        AnewTE = Anew(floor(sizeA(1)/10)+1:end, :);     %test set
+        loss = zeros(1, sizeA(1));
     end
     sizeA = size(Anew);
 
     for i=1:sizeA(1)
         tic
-        
         if isSqrt == 0
             lRatei = lRate(1)/(lRate(2) + i);
         elseif isSqrt == 1
@@ -55,8 +54,14 @@ function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, 
         else
             if ~isTraining
                 if mod(i,10)==0 
-                    ik = ik + 1;
-                    loss(ik) = compressionLoss(AnewTE, U, k, sumLength);
+                     sizeE = size(U);
+                     if sizeE(2) < k 
+                        ik = ik + 1;
+                        loss(ik) = 0;
+                     else
+                        ik = ik + 1;
+                        loss(ik) = compressionLoss(AnewTE, U, k, sumLength);
+                     end
                 end
             end
         end
@@ -87,7 +92,11 @@ function [ loss, time, capping ] = MEG(Anew, k, lRate, isMEG, isSqrt, isCapped, 
             l = length(Sn);
         
         if isCapped == 1
-            [Sn, l, capping ] = cap( Sn, k, l, capping );
+            if isMEG == 0
+                [Sn, l, capping ] = cap( Sn, k, l, capping );
+            elseif isMEG == 1
+                [Sn, l, capping ] = capMEG( Sn, k, l, capping, sizeA(2));
+            end
         end
 
         if(l>k)
