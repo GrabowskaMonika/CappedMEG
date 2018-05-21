@@ -1,0 +1,41 @@
+clc;    
+clear;
+
+C1 = 2.^((-5):(4));
+C2 = 0;
+n = 50;
+<<<<<<< HEAD
+
+isOnline = [0,1];
+k = [1,2,4,8,16,20];
+
+validationSetSize = 1/10;
+testSetSize = 1/3;
+
+dataSets = ["Faces", "MNIST", "Musk", "OptDigits", "Spambase", "Scene"];
+
+=======
+
+isOnline = [0,1];
+k = [1,2,4,8,16,20];
+dataSets = ["Faces", "MNIST", "Musk", "OptDigits", "Spambase", "Scene"];
+>>>>>>> 0c843cf7f591a9d389c88f341b2ea0a44706a570
+for is = 1:length(isOnline)
+    for i = 1:length(dataSets)
+        disp(strcat(dataSets(i), '.mat'))
+        A = importdata(strcat(dataSets(i), '.mat'));
+        for j = 1:length(k)     
+            runAlgorithms( A, k(j), n, dataSets(i), C1, C2, isOnline(is), validationSetSize, testSetSize);
+        end
+    end
+end
+
+A = mnrnd(1,((1.1).^((-1)*1:64))./sum((1.1).^((-1)*1:64)),11000);
+for j = 1:length(k)     
+<<<<<<< HEAD
+    runAlgorithms( A, k(j), n, 'Artifficial', C1, [10,1, 8,1, 7,1], 1, validationSetSize, testSetSize);
+=======
+    runAlgorithms( A, k(j), n, 'Artifficial', C1, [10,1, 8,1, 7,1], 1);
+>>>>>>> 0c843cf7f591a9d389c88f341b2ea0a44706a570
+end
+

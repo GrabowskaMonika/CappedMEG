@@ -1,0 +1,14 @@
+function [ S, l, capping ] = cap(S, k, l, capping)
+
+<<<<<<< HEAD
+%Capping procedure for MSG algorithm
+
+=======
+>>>>>>> 0c843cf7f591a9d389c88f341b2ea0a44706a570
+    kmax = k+3;
+    if(l > kmax)
+        S = S(1:(kmax));
+        l = kmax;
+        capping = capping + 1;
+    end
+end
